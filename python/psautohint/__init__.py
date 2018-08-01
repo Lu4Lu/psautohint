@@ -53,12 +53,20 @@ def get_font_format(font_file_path):
 
 
 def hint_bez_glyph(info, glyph, allow_edit=True, allow_hint_sub=True,
-                   round_coordinates=True):
+                   round_coordinates=True, report_alignment_zones=False,
+                   report_stem_widths=False, report_all_stems=False):
+    report = 0
+    if report_alignment_zones:
+        report = 1
+    elif report_stem_widths:
+        report = 2
     hinted = _psautohint.autohint(tobytes(info),
                                   tobytes(glyph),
                                   allow_edit,
                                   allow_hint_sub,
-                                  round_coordinates)
+                                  round_coordinates,
+                                  report,
+                                  report_all_stems)
 
     return tounicode(hinted)
 

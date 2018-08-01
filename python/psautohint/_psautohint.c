@@ -64,6 +64,40 @@ reportCB(char* msg, int level)
     }
 }
 
+static void
+charZoneCB(int top, int bottom, char* glyphName)
+{
+//  fprintf(stderr, "charZone %s top %f bottom %f\n", glyphName, top / 256.0,
+//          bottom / 256.0);
+}
+
+static void
+stemZoneCB(int top, int bottom, char* glyphName)
+{
+//  fprintf(stderr, "stemZone %s top %f bottom %f\n", glyphName, top / 256.0,
+//          bottom / 256.0);
+}
+
+static void
+hstemCB(int top, int bottom, char* glyphName)
+{
+//  fprintf(stderr, "HStem %s top %f bottom %f\n", glyphName, top / 256.0,
+//          bottom / 256.0);
+}
+
+static void
+vstemCB(int right, int left, char* glyphName)
+{
+//  fprintf(stderr, "VStem %s right %f left %f\n", glyphName, right / 256.0,
+//          left / 256.0);
+}
+
+static void
+reportRetry(void)
+{
+//  fprintf(stderr, "\n==================\n    RETRY\n==================\n\n");
+}
+
 #if PY_MAJOR_VERSION >= 3
 #define MEMNEW(size) PyMem_RawCalloc(1, size)
 #define MEMFREE(ptr) PyMem_RawFree(ptr)
@@ -115,6 +149,7 @@ static PyObject*
 autohint(PyObject* self, PyObject* args)
 {
     int allowEdit = true, roundCoords = true, allowHintSub = true;
+    int report = 0, allStems = false;
     PyObject* fontObj = NULL;
     PyObject* inObj = NULL;
     PyObject* outObj = NULL;
@@ -122,10 +157,28 @@ autohint(PyObject* self, PyObject* args)
     char* fontInfo = NULL;
     bool error = true;
 
-    if (!PyArg_ParseTuple(args, "O!O!|iii", &PyBytes_Type, &fontObj,
+    if (!PyArg_ParseTuple(args, "O!O!|iiiii", &PyBytes_Type, &fontObj,
                           &PyBytes_Type, &inObj, &allowEdit, &allowHintSub,
-                          &roundCoords))
+                          &roundCoords, &report, &allStems))
         return NULL;
+
+    if (report) {
+        allowEdit = allowHintSub = false;
+        switch (report) {
+            case 1:
+                AC_SetReportRetryCB(reportRetry);
+                AC_SetReportZonesCB(charZoneCB, stemZoneCB);
+                break;
+            case 2:
+                AC_SetReportRetryCB(reportRetry);
+                AC_SetReportStemsCB(hstemCB, vstemCB, allStems);
+                break;
+            default:
+                PyErr_SetString(PyExc_ValueError,
+                                "Invalid \"report\" argument, must be 1 or 2");
+                return NULL;
+        }
+    }
 
     AC_SetMemManager(NULL, memoryManager);
     AC_SetReportCB(reportCB);
