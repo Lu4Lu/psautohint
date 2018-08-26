@@ -140,6 +140,8 @@ AutoHint(const ACFontInfo* fontinfo, const char* srcbezdata,
     gRoundToInt = roundCoords;
     gAutoLinearCurveFix = gEditGlyph;
 
+    gVHinting = gHHinting = gVPrimary = gHPrimary = gValList = NULL;
+
     return AutoHintGlyph(fontinfo, srcbezdata, extrahint);
 }
 
